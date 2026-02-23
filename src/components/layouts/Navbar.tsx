@@ -2,9 +2,11 @@ import { useState } from "react";
 import { ModeToggle } from "../mode-toggle";
 import logo from "../../assets/logo.png";
 import { Link } from "react-router-dom";
+import { AddBooksModel } from "../module/AddBooksModal";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [opens, setOpens] = useState(false);
 
   return (
     <nav className="fixed top-0 inset-x-0 w-full bg-red-300 shadow-2xl z-50">
@@ -26,12 +28,17 @@ const Navbar = () => {
         {/* Desktop Links */}
         <div className="hidden sm:block">
           <div className="flex space-x-6">
-            <Link
-              to="/create-books"
+            {/* Add Books Action Button */}
+            <button
+              onClick={() => setOpens(true)}
               className="bg-[#F8B333] text-white px-4 py-2 rounded-md text-sm font-medium shadow-md"
+              type="button"
             >
               Add Books
-            </Link>
+            </button>
+
+            {/* Modal component (বাটনের বাইরে রাখো) */}
+            <AddBooksModel open={opens} setOpen={setOpens} />
             <Link
               to="/"
               className="text-gray-600 hover:bg-gray-100 hover:text-gray-900 px-4 py-2 rounded-md text-sm font-medium transition"
