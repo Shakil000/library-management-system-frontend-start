@@ -1,7 +1,7 @@
 import App from "@/App";
 import { UpdateBook } from "@/components/module/UpdateBook";
 import Books from "@/pages/Books";
-import Home from "@/pages/Home";
+import Borrow from "@/pages/Borrow";
 import { createBrowserRouter } from "react-router";
 
 const router = createBrowserRouter([
@@ -15,7 +15,9 @@ const router = createBrowserRouter([
             },
             {
                 path: "edit-book/:id",
-                element: <UpdateBook></UpdateBook>
+                element: <UpdateBook open={false} setOpen={function (): void {
+                    throw new Error("Function not implemented.");
+                } }></UpdateBook>
             },
             {
                 path: "books",
@@ -27,7 +29,7 @@ const router = createBrowserRouter([
             // },
             {
                path: "borrow-summary",
-                element: "showing borrow books"
+                element: <Borrow></Borrow>
             }
         ]
     }

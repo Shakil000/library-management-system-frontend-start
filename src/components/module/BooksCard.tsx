@@ -47,7 +47,6 @@ const BooksCard = ({ book, index }: IProps) => {
           <button onClick={() => setOpens(true)} className="p-2">
             <FaPenNib />
           </button>
-
           <UpdateBook open={opens} setOpen={setOpens} />
         </h2>
         <span
@@ -87,12 +86,12 @@ const BooksCard = ({ book, index }: IProps) => {
       {/* Actions */}
       <div className="flex justify-end items-center gap-4">
         <button
-          onClick={() => dispatch({ type: "books/update", payload: book })}
-          className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
+          onClick={() => setOpens(true)}
+          className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 p-2"
         >
           Update Book
         </button>
-
+         <UpdateBook open={opens} setOpen={setOpens} />
         <button
           onClick={() => dispatch({ type: "books/delete", payload: book.id })}
           className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600"
