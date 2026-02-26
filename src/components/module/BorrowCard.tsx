@@ -13,50 +13,57 @@ type BorrowBookItem = {
     copies: number;
     available: boolean;
     description?: string;
-  };
+  } | null;
 };
 
-const BorrowCard = ({ item }: { item: BorrowBookItem; index: number }) => {
+const cardStyle = [
+  "bg-gradient-to-l from-violet-200 to-violet-300 shadow-md rounded-lg p-5 border border-violet-200",
+  "bg-gradient-to-r from-sky-100 to-sky-200 shadow-lg rounded-xl p-5 border border-sky-300",
+  "bg-gradient-to-l from-yellow-100 to-yellow-200 shadow-lg rounded-xl p-5 border border-yellow-300",
+];
+
+const BorrowCard = ({
+  item,
+  index,
+}: {
+  item: BorrowBookItem;
+  index: number;
+}) => {
   const book = item.bookId;
 
   return (
-    <div className="border rounded-lg p-5 shadow-sm">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">{book.title}</h2>
+    <div className={cardStyle[index % cardStyle.length]}>
+      <div className="border rounded-lg p-5 shadow-sm">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">{book?.title ? book.title : "Some One delete the book info"}</h2>
+        </div>
 
-        <span
-          className={`px-3 py-1 rounded-full text-sm ${
-            book.available ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"
-          }`}
-        >
-          {/* {book.available ? "Available" : "Unavailable"} */}
-        </span>
-      </div>
+        <p className="mt-2 text-gray-600">
+          {book?.description ? book?.description : ""}
+        </p>
 
-      <p className="mt-2 text-gray-600">
-        {book.description ? book.description : "No description"}
-      </p>
-
-      <div className="mt-4 text-sm text-gray-700 space-y-1">
-        <p>
-          <span className="font-medium">Author:</span> {book.author}
-        </p>
-        <p>
-          <span className="font-medium">ISBN:</span> {book.isbn}
-        </p>
-        <p>
-          <span className="font-medium">Genre:</span> {book.genre || "Not specified"}
-        </p>
-        <p className="text-red-600 font-semibold">
-          Copies: {typeof book.copies === "number" ? book.copies : "N/A"}
-        </p>
-        <p>
-          <span className="font-medium">Quantity:</span> {item.quantity}
-        </p>
-        <p>
-          <span className="font-medium">Due Date:</span>{" "}
-          {item.dueDate ? new Date(item.dueDate).toLocaleDateString() : "N/A"}
-        </p>
+        <div className="mt-4 text-sm text-gray-700 space-y-1">
+          <p>
+            <span className="font-medium">Author:</span> {book?.author ? book.author : "N/A"}
+          </p>
+          <p>
+            <span className="font-medium">ISBN:</span> {book?.isbn ? book.isbn : "N/A"}
+          </p>
+          <p>
+            <span className="font-medium">Genre:</span>{" "}
+            {book?.genre ? book.genre  : "N/A"}
+          </p>
+          <p className="text-red-600 font-semibold">
+            Available Copies: {typeof book?.copies === "number" ? book?.copies : "N/A"}
+          </p>
+          <p>
+            <span className="font-medium">Borrowed Quantity:</span> {item.quantity}
+          </p>
+          <p>
+            <span className="font-medium">Due Date:</span>{" "}
+            {item.dueDate ? new Date(item.dueDate).toLocaleDateString() : "N/A"}
+          </p>
+        </div>
       </div>
     </div>
   );

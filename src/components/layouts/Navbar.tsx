@@ -52,10 +52,16 @@ const Navbar = () => {
               All Books
             </Link>
             <Link
+              to="borrowed-book"
+              className="text-gray-600 hover:bg-gray-100 hover:text-gray-900 px-4 py-2 rounded-md text-sm font-medium transition"
+            >
+              Borrowed Books
+            </Link>
+            <Link
               to="borrow-summary"
               className="text-gray-600 hover:bg-gray-100 hover:text-gray-900 px-4 py-2 rounded-md text-sm font-medium transition"
             >
-              Borrow Summary
+              Borrowed Books Summary
             </Link>
             <div className="hidden sm:flex items-center gap-4">
               {/* your links */}

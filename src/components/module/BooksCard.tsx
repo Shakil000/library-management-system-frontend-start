@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useAppDispatch } from "@/redux/hook";
 import type { IBook } from "@/types";
 import {
   Dialog,
@@ -13,6 +12,22 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FaPenNib } from "react-icons/fa6";
 import { UpdateBook } from "./UpdateBook";
+import {
+  useBorrowBookMutation,
+  useDeleteBookMutation,
+} from "@/redux/api/baseApi";
+import { useNavigate } from "react-router";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "../ui/alert-dialog";
 
 interface IProps {
   book: IBook;
@@ -20,23 +35,60 @@ interface IProps {
 }
 
 const cardStyles = [
-  "bg-white shadow-md rounded-lg p-5 border border-gray-200",
-  "bg-gradient-to-r from-pink-100 to-pink-200 shadow-lg rounded-xl p-5 border border-pink-300",
-  "bg-gradient-to-r from-green-100 to-green-200 shadow-lg rounded-xl p-5 border border-green-300",
+  "bg-gradient-to-l from-orange-100 to-orange-200 shadow-md rounded-lg p-5 border border-gray-200",
+  "bg-gradient-to-r from-pink-100 to-pink-300 shadow-lg rounded-xl p-5 border border-pink-300",
+  "bg-gradient-to-r from-green-100 to-green-300 shadow-lg rounded-xl p-5 border border-green-200",
 ];
 
 const BooksCard = ({ book, index }: IProps) => {
-  const dispatch = useAppDispatch();
+  const [borrowBook, { isLoading: isBorrowing }] = useBorrowBookMutation();
+  const navigate = useNavigate();
+
   const [open, setOpen] = useState(false);
   const [opens, setOpens] = useState(false);
   const [borrowData, setBorrowData] = useState({ copies: 1, dueDate: "" });
+  const [deleteBook, { isLoading: isDeleting }] = useDeleteBookMutation();
 
-  const handleBorrow = () => {
-    dispatch({
-      type: "books/borrow",
-      payload: { id: book.id, ...borrowData },
-    });
-    setOpen(false);
+  const handleBorrow = async () => {
+    // ✅ validation
+    if (!borrowData.dueDate) {
+      toast.error("Please select a due date!");
+      return;
+    }
+
+    if (borrowData.copies < 1) {
+      toast.error("Copies must be at least 1!");
+      return;
+    }
+
+    if (borrowData.copies > (book.copies ?? 0)) {
+      toast.error("Not enough copies available!");
+      return;
+    }
+
+    try {
+      // ✅ payload: backend যা চায় সেই অনুযায়ী field নাম
+      const payload = {
+        bookId: book._id, // তোমার book object এ _id থাকলে সেটা
+        quantity: borrowData.copies,
+        dueDate: borrowData.dueDate,
+      };
+
+      console.log("BORROW PAYLOAD =>", payload); // ✅
+      await borrowBook(payload).unwrap();
+
+      toast.success("Borrowed successfully ✅");
+      setOpen(false);
+
+      // ✅ reset
+      setBorrowData({ copies: 1, dueDate: "" });
+
+      // ✅ go to borrow summary page (optional)
+      navigate("/borrowed-book");
+    } catch (err) {
+      toast.error("Borrow failed ❌");
+      console.error(err);
+    }
   };
 
   return (
@@ -91,13 +143,59 @@ const BooksCard = ({ book, index }: IProps) => {
         >
           Update Book
         </button>
-         <UpdateBook open={opens} setOpen={setOpens} />
-        <button
-          onClick={() => dispatch({ type: "books/delete", payload: book.id })}
-          className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600"
-        >
-          Delete
-        </button>
+        <UpdateBook open={opens} setOpen={setOpens} />
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <button
+              onClick={(e) => {
+                if (book.isBorrowed === true) {
+                  e.preventDefault(); // AlertDialog open হওয়া আটকাবে
+                  toast.error(
+                    "You can't delete this book because it is borrowed.",
+                  );
+                }
+              }}
+              disabled={!book.available}
+              className={`px-3 py-1 text-sm text-white rounded ${
+                !book.available
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-red-500 hover:bg-red-600"
+              }`}
+              title={
+                !book.available ? "Borrowed book can't be deleted" : "Delete"
+              }
+            >
+              Delete
+            </button>
+          </AlertDialogTrigger>
+
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                Are you sure you want to delete this book?
+              </AlertDialogTitle>
+            </AlertDialogHeader>
+
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+
+              <AlertDialogAction
+                disabled={isDeleting}
+                onClick={async () => {
+                  try {
+                    await deleteBook(book._id).unwrap();
+                    toast.success("Book deleted successfully ✅");
+                  } catch (err: any) {
+                    toast.error(err?.data?.message || "Delete failed ❌");
+                  }
+                }}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                {isDeleting ? "Deleting..." : "Yes, Delete"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {book.available ? (
           <>
@@ -153,7 +251,9 @@ const BooksCard = ({ book, index }: IProps) => {
                   <DialogClose asChild>
                     <Button variant="outline">Cancel</Button>
                   </DialogClose>
-                  <Button onClick={handleBorrow}>Confirm Borrow</Button>
+                  <Button onClick={handleBorrow} disabled={isBorrowing}>
+                    {isBorrowing ? "Borrowing..." : "Confirm Borrow"}
+                  </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>

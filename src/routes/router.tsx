@@ -28,8 +28,12 @@ const router = createBrowserRouter([
             //     element: <Home></Home>
             // },
             {
-               path: "borrow-summary",
+               path: "borrowed-book",
                 element: <Borrow></Borrow>
+            },
+            {
+               path: "borrow-summary",
+                element: "Summary will be comming soon"
             }
         ]
     }
