@@ -26,7 +26,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "../ui/alert-dialog";
 
 interface IProps {
@@ -46,6 +45,7 @@ const BooksCard = ({ book, index }: IProps) => {
 
   const [open, setOpen] = useState(false);
   const [opens, setOpens] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [borrowData, setBorrowData] = useState({ copies: 1, dueDate: "" });
   const [deleteBook, { isLoading: isDeleting }] = useDeleteBookMutation();
 
@@ -92,14 +92,14 @@ const BooksCard = ({ book, index }: IProps) => {
   };
 
   return (
-    <div className={cardStyles[index % cardStyles.length]}>
+    <div className={`${cardStyles[index % cardStyles.length]} h-full flex flex-col justify-between`}>
       <div className="flex justify-between items-center mb-3">
         <h2 className="text-lg font-semibold">
           {book.title}
           <button onClick={() => setOpens(true)} className="p-2">
             <FaPenNib />
           </button>
-          <UpdateBook open={opens} setOpen={setOpens} />
+          <UpdateBook open={opens} setOpen={setOpens} book={book} />
         </h2>
         <span
           className={`px-2 py-1 text-xs rounded-full ${
@@ -143,32 +143,27 @@ const BooksCard = ({ book, index }: IProps) => {
         >
           Update Book
         </button>
-        <UpdateBook open={opens} setOpen={setOpens} />
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <button
-              onClick={(e) => {
-                if (book.isBorrowed === true) {
-                  e.preventDefault(); // AlertDialog open হওয়া আটকাবে
-                  toast.error(
-                    "You can't delete this book because it is borrowed.",
-                  );
-                }
-              }}
-              disabled={!book.available}
-              className={`px-3 py-1 text-sm text-white rounded ${
-                !book.available
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-red-500 hover:bg-red-600"
-              }`}
-              title={
-                !book.available ? "Borrowed book can't be deleted" : "Delete"
-              }
-            >
-              Delete
-            </button>
-          </AlertDialogTrigger>
+        <UpdateBook open={opens} setOpen={setOpens} book={book} />
+        <button
+          type="button"
+          onClick={() => {
+            if (book.isBorrowed === true) {
+              toast.error("This book is borrowed. You can't delete it.");
+              return;
+            }
+            setDeleteOpen(true);
+          }}
+          className={`px-3 py-1 text-sm text-white rounded ${
+            book.isBorrowed
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-red-500 hover:bg-red-600"
+          }`}
+          title={book.isBorrowed ? "Borrowed book can't be deleted" : "Delete"}
+        >
+          Delete
+        </button>
 
+        <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>
@@ -177,14 +172,20 @@ const BooksCard = ({ book, index }: IProps) => {
             </AlertDialogHeader>
 
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel asChild>
+                <button type="button" onClick={() => setDeleteOpen(false)}>
+                  Cancel
+                </button>
+              </AlertDialogCancel>
 
               <AlertDialogAction
-                disabled={isDeleting}
+               
                 onClick={async () => {
                   try {
                     await deleteBook(book._id).unwrap();
                     toast.success("Book deleted successfully ✅");
+                    setDeleteOpen(false);
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   } catch (err: any) {
                     toast.error(err?.data?.message || "Delete failed ❌");
                   }
@@ -196,7 +197,6 @@ const BooksCard = ({ book, index }: IProps) => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-
         {book.available ? (
           <>
             <button

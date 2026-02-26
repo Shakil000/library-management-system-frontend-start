@@ -2,6 +2,8 @@ import App from "@/App";
 import { UpdateBook } from "@/components/module/UpdateBook";
 import Books from "@/pages/Books";
 import Borrow from "@/pages/Borrow";
+import BorrowSummary from "@/pages/BorrowSummary";
+import Home from "@/pages/Home";
 import { createBrowserRouter } from "react-router";
 
 const router = createBrowserRouter([
@@ -10,30 +12,26 @@ const router = createBrowserRouter([
         element: <App></App>,
         children: [
             {
-                index: true,
-                element: <Books></Books>
+                path: "/",
+                element: <Home></Home>
             },
             {
                 path: "edit-book/:id",
                 element: <UpdateBook open={false} setOpen={function (): void {
                     throw new Error("Function not implemented.");
-                } }></UpdateBook>
+                } } book={undefined}></UpdateBook>
             },
             {
                 path: "books",
                 element: <Books></Books>
             },
-            // {
-            //    path: "create-books",
-            //     element: <Home></Home>
-            // },
             {
                path: "borrowed-book",
                 element: <Borrow></Borrow>
             },
             {
                path: "borrow-summary",
-                element: "Summary will be comming soon"
+                element: <BorrowSummary></BorrowSummary>
             }
         ]
     }

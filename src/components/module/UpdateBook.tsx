@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { useAppDispatch } from "@/redux/hook";
 import {
   Controller,
   useForm,
@@ -18,43 +17,79 @@ import {
 import { Field, FieldError, FieldLabel } from "../ui/field";
 import { Input } from "../ui/input";
 import type { IBook } from "@/types";
-import { addBook } from "@/redux/features/books/bookSlice";
-import { useCreateBookMutation } from "@/redux/api/baseApi";
+import { useEffect } from "react";
+import { toast } from "sonner";
+import { useUpdateBookMutation } from '@/redux/api/baseApi';
 
 type UpdateBookProps = {
   open: boolean;
-  setOpen: (open: boolean) => void;
+  setOpen: (v: boolean) => void;
+  book: IBook;
 };
 
-export function UpdateBook({ open, setOpen }: UpdateBookProps) {
-  const form = useForm();
-  const dispatch = useAppDispatch();
+export function UpdateBook({ open, setOpen, book }: UpdateBookProps) {
+  const form = useForm({
+    defaultValues: {
+      title: "",
+      author: "",
+      isbn: "",
+      description: "",
+      copies: 0,
+      genre: "",
+      available: true,
+    },
+  });
 
-  const [createBook, { isLoading }] = useCreateBookMutation();
+  const [updateBook, { isLoading }] = useUpdateBookMutation();
+
+  // ✅ modal open হলে clicked book data form এ বসানো
+  useEffect(() => {
+    if (open && book) {
+      form.reset({
+        title: book.title ?? "",
+        author: book.author ?? "",
+        isbn: book.isbn ?? "",
+        description: book.description ?? "",
+        copies: typeof book.copies === "number" ? book.copies : 0,
+        genre: book.genre ?? "",
+        available: typeof book.available === "boolean" ? book.available : true,
+      });
+    }
+  }, [open, book, form]);
 
   const onSubmit: SubmitHandler<FieldValues> = async (formData) => {
-    // copies/available ঠিক টাইপে পাঠানো (না হলে string হয়ে যাবে)
-    const payload: IBook = {
-      ...(formData as IBook),
+    // ✅ payload clean + correct type
+    const payload: Partial<IBook> = {
+      title: String(formData.title).trim(),
+      author: String(formData.author).trim(),
+      isbn: String(formData.isbn).trim(),
+      description: String(formData.description ?? ""),
       copies: Number(formData.copies),
       available:
         typeof formData.available === "boolean"
           ? formData.available
           : String(formData.available).toLowerCase() === "true",
+      // genre uppercase
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       genre: String(formData.genre).toUpperCase() as any,
     };
 
-    // Optional: local redux store update
-    dispatch(addBook(payload));
+    // ✅ basic validation (extra safety)
+    if (!book?._id) {
+      toast.error("Book id missing!");
+      return;
+    }
 
     try {
-      const result = await createBook(payload).unwrap();
-      console.log("Book saved to DB:", result);
+      await updateBook({ id: book._id, payload }).unwrap();
+
+      toast.success("Book updated successfully ✅");
       setOpen(false);
       form.reset();
-    } catch (error) {
-      console.error("Error saving book:", error);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+      toast.error(err?.data?.message || "Update failed ❌");
+      console.error(err);
     }
   };
 
@@ -62,11 +97,11 @@ export function UpdateBook({ open, setOpen }: UpdateBookProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="sm:max-w-sm">
         <DialogDescription className="sr-only">
-          Add book dialog
+          Update book dialog
         </DialogDescription>
 
         <DialogHeader>
-          <DialogTitle>Add Books</DialogTitle>
+          <DialogTitle>Update Book</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
@@ -77,12 +112,7 @@ export function UpdateBook({ open, setOpen }: UpdateBookProps) {
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
                 <FieldLabel htmlFor={field.name}>Title</FieldLabel>
-                <Input
-                  {...field}
-                  id={field.name}
-                  aria-invalid={fieldState.invalid}
-                  autoComplete="off"
-                />
+                <Input {...field} id={field.name} autoComplete="off" />
                 {fieldState.error && <FieldError errors={[fieldState.error]} />}
               </Field>
             )}
@@ -95,12 +125,7 @@ export function UpdateBook({ open, setOpen }: UpdateBookProps) {
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
                 <FieldLabel htmlFor={field.name}>Author</FieldLabel>
-                <Input
-                  {...field}
-                  id={field.name}
-                  aria-invalid={fieldState.invalid}
-                  autoComplete="off"
-                />
+                <Input {...field} id={field.name} autoComplete="off" />
                 {fieldState.error && <FieldError errors={[fieldState.error]} />}
               </Field>
             )}
@@ -113,12 +138,7 @@ export function UpdateBook({ open, setOpen }: UpdateBookProps) {
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
                 <FieldLabel htmlFor={field.name}>Isbn</FieldLabel>
-                <Input
-                  {...field}
-                  id={field.name}
-                  aria-invalid={fieldState.invalid}
-                  autoComplete="off"
-                />
+                <Input {...field} id={field.name} autoComplete="off" />
                 {fieldState.error && <FieldError errors={[fieldState.error]} />}
               </Field>
             )}
@@ -131,12 +151,7 @@ export function UpdateBook({ open, setOpen }: UpdateBookProps) {
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
                 <FieldLabel htmlFor={field.name}>Description</FieldLabel>
-                <Input
-                  {...field}
-                  id={field.name}
-                  aria-invalid={fieldState.invalid}
-                  autoComplete="off"
-                />
+                <Input {...field} id={field.name} autoComplete="off" />
                 {fieldState.error && <FieldError errors={[fieldState.error]} />}
               </Field>
             )}
@@ -161,7 +176,6 @@ export function UpdateBook({ open, setOpen }: UpdateBookProps) {
                   type="number"
                   min={0}
                   step={1}
-                  aria-invalid={fieldState.invalid}
                   autoComplete="off"
                 />
                 {fieldState.error && <FieldError errors={[fieldState.error]} />}
@@ -172,12 +186,11 @@ export function UpdateBook({ open, setOpen }: UpdateBookProps) {
           <Controller
             name="available"
             control={form.control}
-            defaultValue={true}
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor={field.name}>Available</FieldLabel>
+            render={({ field }) => (
+              <Field>
+                <FieldLabel htmlFor="available">Available</FieldLabel>
                 <select
-                  id={field.name}
+                  id="available"
                   value={String(field.value)}
                   onChange={(e) => field.onChange(e.target.value === "true")}
                   className="border rounded px-2 py-2 w-full"
@@ -185,7 +198,6 @@ export function UpdateBook({ open, setOpen }: UpdateBookProps) {
                   <option value="true">TRUE</option>
                   <option value="false">FALSE</option>
                 </select>
-                {fieldState.error && <FieldError errors={[fieldState.error]} />}
               </Field>
             )}
           />
@@ -200,7 +212,6 @@ export function UpdateBook({ open, setOpen }: UpdateBookProps) {
                 <select
                   {...field}
                   id={field.name}
-                  aria-invalid={fieldState.invalid}
                   className="border rounded px-2 py-2 w-full"
                 >
                   <option value="">Select Genre</option>
@@ -224,7 +235,7 @@ export function UpdateBook({ open, setOpen }: UpdateBookProps) {
             </DialogClose>
 
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Submitting..." : "Submit"}
+              {isLoading ? "Updating..." : "Update"}
             </Button>
           </DialogFooter>
         </form>

@@ -1,3 +1,4 @@
+
 type BorrowBookItem = {
   _id: string;
   quantity: number;
@@ -13,13 +14,14 @@ type BorrowBookItem = {
     copies: number;
     available: boolean;
     description?: string;
+    isBorrowed: string;
   } | null;
 };
 
 const cardStyle = [
-  "bg-gradient-to-l from-violet-200 to-violet-300 shadow-md rounded-lg p-5 border border-violet-200",
-  "bg-gradient-to-r from-sky-100 to-sky-200 shadow-lg rounded-xl p-5 border border-sky-300",
-  "bg-gradient-to-l from-yellow-100 to-yellow-200 shadow-lg rounded-xl p-5 border border-yellow-300",
+  "bg-gradient-to-br from-violet-200 via-violet-100 to-white border-violet-200",
+  "bg-gradient-to-br from-sky-200 via-sky-100 to-white border-sky-200",
+  "bg-gradient-to-br from-yellow-200 via-yellow-100 to-white border-yellow-200",
 ];
 
 const BorrowCard = ({
@@ -31,37 +33,127 @@ const BorrowCard = ({
 }) => {
   const book = item.bookId;
 
+  const due = item?.dueDate ? new Date(item.dueDate) : null;
+  const isOverdue = due ? due.getTime() < Date.now() : false;
+
   return (
-    <div className={cardStyle[index % cardStyle.length]}>
-      <div className="border rounded-lg p-5 shadow-sm">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">{book?.title ? book.title : "Some One delete the book info"}</h2>
+    <div
+      className={`relative overflow-hidden rounded-2xl border shadow-md ${cardStyle[index % cardStyle.length]}`}
+    >
+      {/* top shine */}
+      <div className="absolute -top-14 -right-14 h-36 w-36 rounded-full bg-white/50 blur-2xl" />
+
+      <div className="p-5">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-2 text-xs font-semibold px-3 py-1 rounded-full bg-black/10 text-gray-800">
+                <span className="h-2 w-2 rounded-full bg-green-600" />
+                Borrowed
+              </span>
+
+              <span
+                className={`text-xs font-semibold px-3 py-1 rounded-full ${
+                  isOverdue ? "bg-red-600 text-white" : "bg-blue-600 text-white"
+                }`}
+              >
+                {due ? `Due: ${due.toLocaleDateString()}` : "Due: N/A"}
+              </span>
+            </div>
+
+            <h2 className="mt-3 text-lg font-bold text-gray-900 wrap-break-words">
+              {book?.title ? book.title : "Book info not found"}
+            </h2>
+
+            {book?.author ? (
+              <p className="mt-1 text-sm text-gray-700">
+                by <span className="font-medium">{book.author}</span>
+              </p>
+            ) : (
+              <p className="mt-1 text-sm text-gray-600">
+                Someone deleted the book info
+              </p>
+            )}
+          </div>
+
+          {/* small id chip */}
+          <div className="shrink-0 text-xs font-semibold px-3 py-1 rounded-full bg-white/60 border border-white/70 text-gray-800">
+            #{item._id.slice(-6)}
+          </div>
         </div>
 
-        <p className="mt-2 text-gray-600">
-          {book?.description ? book?.description : ""}
-        </p>
+        {/* Description */}
+        {book?.description ? (
+          <p className="mt-3 text-sm text-gray-700 line-clamp-2">
+            {book.description}
+          </p>
+        ) : (
+          <p className="mt-3 text-sm text-gray-500 italic">
+            No description available
+          </p>
+        )}
 
-        <div className="mt-4 text-sm text-gray-700 space-y-1">
+        {/* Divider */}
+        <div className="my-4 h-px bg-black/10" />
+
+        {/* Info grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="rounded-xl bg-white/60 border border-white/70 p-4">
+            <p className="text-xs text-gray-600">ISBN</p>
+            <p className="text-sm font-semibold text-gray-900 mt-1">
+              {book?.isbn ? book.isbn : "N/A"}
+            </p>
+          </div>
+
+          <div className="rounded-xl bg-white/60 border border-white/70 p-4">
+            <p className="text-xs text-gray-600">Genre</p>
+            <p className="text-sm font-semibold text-gray-900 mt-1">
+              {book?.genre ? book.genre : "N/A"}
+            </p>
+          </div>
+
+          <div className="rounded-xl bg-white/60 border border-white/70 p-4">
+            <p className="text-xs text-gray-600">Available Copies</p>
+            <p className="text-sm font-semibold mt-1 text-red-600">
+              {typeof book?.copies === "number" ? book.copies : "N/A"}
+            </p>
+          </div>
+
+          <div className="rounded-xl bg-white/60 border border-white/70 p-4">
+            <p className="text-xs text-gray-600">Borrowed Quantity</p>
+            <p className="text-sm font-semibold text-gray-900 mt-1">
+              {item.quantity}
+            </p>
+          </div>
+        </div>
+
+        {/* Missing book warning */}
+        {!book && (
+          <div className="mt-4 rounded-xl border border-orange-200 bg-orange-50 p-4">
+            <p className="text-sm font-semibold text-orange-700">
+              This borrow record exists, but the book was deleted.
+            </p>
+            <p className="text-xs text-orange-600 mt-1">
+              Some fields may show N/A.
+            </p>
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-600">
           <p>
-            <span className="font-medium">Author:</span> {book?.author ? book.author : "N/A"}
+            Borrowed on:{" "}
+            <span className="font-medium text-gray-800">
+              {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "N/A"}
+            </span>
           </p>
+
           <p>
-            <span className="font-medium">ISBN:</span> {book?.isbn ? book.isbn : "N/A"}
-          </p>
-          <p>
-            <span className="font-medium">Genre:</span>{" "}
-            {book?.genre ? book.genre  : "N/A"}
-          </p>
-          <p className="text-red-600 font-semibold">
-            Available Copies: {typeof book?.copies === "number" ? book?.copies : "N/A"}
-          </p>
-          <p>
-            <span className="font-medium">Borrowed Quantity:</span> {item.quantity}
-          </p>
-          <p>
-            <span className="font-medium">Due Date:</span>{" "}
-            {item.dueDate ? new Date(item.dueDate).toLocaleDateString() : "N/A"}
+            Status:{" "}
+            <span className={`font-semibold ${isOverdue ? "text-red-700" : "text-green-700"}`}>
+              {isOverdue ? "Overdue" : "On time"}
+            </span>
           </p>
         </div>
       </div>

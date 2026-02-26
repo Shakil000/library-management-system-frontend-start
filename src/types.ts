@@ -10,12 +10,3 @@ export interface IBook {
   available?: boolean;
   isBorrowed: boolean;
 }
-
-
-export interface IUser{
-  id: string;
-  user: string;
-  email: string;
-  date: string;
-  role: "admin" | "manager" | "other";
-}

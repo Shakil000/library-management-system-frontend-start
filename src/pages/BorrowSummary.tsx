@@ -1,5 +1,5 @@
 import { SpinnerButton } from "@/components/layouts/Loading";
-import BorrowCard from "@/components/module/BorrowCard";
+import BorrowSummaryCard from "@/components/module/BorrowSummaryCard";
 import { useGetBorrowBooksQuery } from "@/redux/api/baseApi";
 
 type BorrowBookItem = {
@@ -26,7 +26,7 @@ type BorrowApiResponse = {
   books: BorrowBookItem[];
 };
 
-const Borrow = () => {
+const BorrowSummary = () => {
   const { data, isLoading, isError } = useGetBorrowBooksQuery(undefined) as {
     data?: BorrowApiResponse;
     isLoading: boolean;
@@ -37,7 +37,7 @@ const Borrow = () => {
     return (
       <div className="h-screen flex items-center justify-center">
         <p className="text-4xl md:text-6xl font-bold text-red-400 text-center">
-          <SpinnerButton></SpinnerButton>
+            <SpinnerButton></SpinnerButton>
           Loading Borrowed Books...
         </p>
       </div>
@@ -59,13 +59,13 @@ const Borrow = () => {
   return (
     <>
       <h1 className="flex items-center justify-center mt-3 text-2xl font-semibold text-red-400 underline">
-        Borrowed Books
+        Borrowed Books Summary
       </h1>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-5 mb-5 p-5">
         {borrowed.length > 0 ? (
           borrowed.map((item, index) => (
-            <BorrowCard key={item._id} item={item} index={index} />
+            <BorrowSummaryCard key={item._id} item={item} index={index} />
           ))
         ) : (
           <p className="col-span-full text-center text-gray-500">
@@ -77,4 +77,4 @@ const Borrow = () => {
   );
 };
 
-export default Borrow;
+export default BorrowSummary;
